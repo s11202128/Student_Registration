@@ -15,39 +15,36 @@ const schema = z.object({
   student_name: z.string().trim().min(1, "Name is required").max(100),
   student_id: z.string().trim().min(1, "Student ID is required").max(50),
   email: z.string().trim().email("Invalid email address").max(255),
-  course: z.string().min(1, "Please select a course"),
   contact_number: z.string().trim().min(7, "Contact number must be at least 7 digits").max(20),
 });
 
 type FormData = z.output<typeof schema>;
 
-const COURSES = [
-  "Computer Science",
-  "Information Technology",
-  "Business Administration",
-  "Engineering",
-  "Mathematics",
-  "Physics",
-  "Biology",
-  "Chemistry",
-  "English Literature",
-  "Economics",
-];
+
 
 export default function RegistrationForm() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      contact_number: "+679",
+    },
   });
-
-  const courseValue = watch("course");
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const { error } = await supabase.from("students").insert([data as any]);
+      const { error } = await supabase.from("students").insert([
+        {
+          student_name: data.student_name,
+          student_id: data.student_id,
+          email: data.email,
+          contact_number: data.contact_number,
+          course: "N/A",
+        }
+      ]);
       if (error) {
         if (error.code === "23505") {
           toast.error("A student with this ID already exists.");
@@ -90,6 +87,7 @@ export default function RegistrationForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
           <div className="space-y-2">
             <Label htmlFor="student_name">Full Name</Label>
             <Input id="student_name" placeholder="John Doe" {...register("student_name")} />
@@ -108,24 +106,11 @@ export default function RegistrationForm() {
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label>Course</Label>
-            <Select value={courseValue} onValueChange={(val) => setValue("course", val, { shouldValidate: true })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your course" />
-              </SelectTrigger>
-              <SelectContent>
-                {COURSES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.course && <p className="text-sm text-destructive">{errors.course.message}</p>}
-          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="contact_number">Contact Number</Label>
-            <Input id="contact_number" placeholder="+1 234 567 8900" {...register("contact_number")} />
+            <Input id="contact_number" placeholder="+679 7899237" {...register("contact_number")} />
             {errors.contact_number && <p className="text-sm text-destructive">{errors.contact_number.message}</p>}
           </div>
 
